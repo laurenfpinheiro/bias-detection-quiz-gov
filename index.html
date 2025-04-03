@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bias Detection Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .question {
+            font-size: 40px; /* Increased font size to fill more screen space */
+            margin-bottom: 20px;
+            line-height: 1.5;
+            height: 30%; /* Let the question take up a good portion of the screen */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px; /* Slightly larger buttons */
+        }
+        .options button:hover {
+            background: #0056b3;
+        }
+        #quiz-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="quiz-container">
+        <h2>How Well Can You Detect Media Bias?</h2>
+        <div id="question-container" class="question"></div>
+        <div id="options-container" class="options"></div>
+        <div id="result-container" style="display: none;"></div>
+    </div>
+    <script>
+        const quizData = [
+            {
+                question: "USA Today reports that a new policy will “crush the economy,” but it doesn’t provide any expert opinions or data. What should you do?",
+                options: [
+                    { text: "Assume it’s true because news outlets wouldn’t publish false information", score: 0 },
+                    { text: "Check if trusted sources provide evidence for the claim", score: 1 },
+                    { text: "Share it since the wording sounds urgent", score: 0 },
+                    { text: "Dismiss it because news is always exaggerated", score: 0 }
+                ]
+            },
+            {
+                question: " You see an article that only features interviews from people who oppose a new law. What’s the issue here?",
+                options: [
+                    { text: "The article is biased because it only presents one side", score: 1 },
+                    { text: "The law must actually be bad", score: 0 },
+                    { text: "There probably weren’t any supporters to interview", score: 0 },
+                    { text: "That’s just how journalism works", score: 0 }
+                ]
+            },
+            {
+                question: "A post on TikTok claims that Fox News is hiding a big story, but you can’t find it anywhere on their website. What should you do?",
+                options: [
+                    { text: "Assume it’s true because Fox wouldn’t ignore an important event", score: 0 },
+                    { text: "Search multiple sources to see if the story is actually being reported", score: 1 },
+                    { text: "Share the post so more people know", score: 0 },
+                    { text: "Trust that the truth will come out soon and believe the TikTok for now", score: 0 }
+                ]
+            },
+            {
+                question: "A news site calls a politician’s speech “brilliant and inspiring,” while another calls it “misleading and dangerous.” What’s the best way to figure out what was actually said?",
+                options: [
+                    { text: "Read both articles and try to find a neutral version", score: 1 },
+                    { text: "Believe the one that aligns with your views", score: 0 },
+                    { text: "Just assume the speech was controversial", score: 0 },
+                    { text: "Share both articles to your friends and discuss the side you support with them", score: 0 }
+                ]
+            },
+            {
+                question: "An NBC article says, “Many experts believe this policy will fail,” but doesn’t name any experts. What’s the issue?",
+                options: [
+                    { text: "If it says that many experts believe the policy will fail, it's probably true", score: 0 },
+                    { text: "The article is automatically biased", score: 0 },
+                    { text: "The article is making a claim without specific sources", score: 1 },
+                    { text: "Send an email to the author of the article asking for more information", score: 0 }
+                ]
+            },
+            {
+                question: "A breaking news story is published, but later that day, it’s updated with corrections. What does this tell you?",
+                options: [
+                    { text: "The news outlet was lying the first time", score: 0 },
+                    { text: "You should distrust the source in the future", score: 0 },
+                    { text: "Assume the new information is also wrong", score: 0 },
+                    { text: "This was a responsible move that the news company made", score: 1 }
+                ]
+            },
+            {
+                question: "A website ends every political article with “Clearly, anyone smart would agree.” What’s that a sign of?",
+                options: [
+                    { text: "Satire", score: 0 },
+                    { text: "Unfiltered journalism", score: 0 },
+                    { text: "Bias", score: 1 },
+                    { text: "A joke", score: 0 }
+                ]
+            },
+            {
+                question: "You see a source called “Best News Ever” sharing news, but you can’t find an About page or who runs it. What do you do?",
+                options: [
+                    { text: "Question its credibility and check other sites", score: 1 },
+                    { text: "Share it so that more people see it", score: 0 },
+                    { text: "Bookmark it to look at it a few months from now", score: 0 },
+                    { text: "Trust it if their articles sound good", score: 0 }
+                ]
+            },
+            {
+                question: "What’s the best way to fact-check a news story?",
+                options: [
+                    { text: "Trust whatever site published it first", score: 0 },
+                    { text: "Search for multiple reliable sources", score: 1 },
+                    { text: "Only believe news that supports your views", score: 0 },
+                    { text: "Check the comments section for opinions", score: 0 }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            if (currentQuestion < quizData.length) {
+                document.getElementById("question-container").innerText = quizData[currentQuestion].question;
+                document.getElementById("options-container").innerHTML = "";
+                quizData[currentQuestion].options.forEach((option) => {
+                    const button = document.createElement("button");
+                    button.innerText = option.text;
+                    button.onclick = () => {
+                        score += option.score;
+                        currentQuestion++;
+                        loadQuestion();
+                    };
+                    document.getElementById("options-container").appendChild(button);
+                });
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById("question-container").style.display = "none";
+            document.getElementById("options-container").style.display = "none";
+            const resultContainer = document.getElementById("result-container");
+            resultContainer.style.display = "block";
+            resultContainer.innerHTML = `<h3>Your Bias Detection Score: ${score}/${quizData.length}</h3>`;
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
